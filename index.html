@@ -627,6 +627,47 @@ function checkAdminMenu(role) {
 // ... Fungsi-fungsi lain seperti showRegisterForm(), showLoginForm(), dan window.logout() ada di bawah atau di atas kode ini.
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+// index.html - Tempelkan di dalam <script> non-module (setelah listener loginForm)
+
+document.getElementById('barangForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const barangId = document.getElementById('barangId').value;
+    // Ambil data dari formulir di sini
+    const namaBarang = document.getElementById('namaBarang').value;
+    const kodeBarang = document.getElementById('kodeBarang').value;
+    const lokasiId = document.getElementById('LokasiBarang').value; 
+    const photoFile = document.getElementById('photoBarang').files[0];
+
+    // Persiapan data
+    const dataBarang = {
+        kode: kodeBarang,
+        nama: namaBarang,
+        lokasi: lokasiId,
+        // ... field lainnya ...
+        createdAt: new Date()
+    };
+    
+    try {
+        if (barangId) {
+            // Mode Edit: Lakukan update
+            // await window.firebaseUtils.updateDoc(window.firebaseUtils.doc(window.firebaseDb, "barang", barangId), dataBarang);
+            alert("Barang berhasil diperbarui!");
+        } else {
+            // Mode Tambah Baru: Lakukan penambahan
+            // const docRef = await window.firebaseUtils.addDoc(window.firebaseUtils.collection(window.firebaseDb, "barang"), dataBarang);
+            alert("Barang berhasil ditambahkan!");
+        }
+
+        // Tutup modal dan muat ulang data (fungsi loadBarangData belum ada, tapi ini adalah polanya)
+        closeBarangModal();
+        // loadBarangData(); 
+
+    } catch (error) {
+        console.error("Gagal menyimpan barang:", error);
+        alert("Gagal menyimpan data barang. Cek console log.");
+    }
+});
 
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
@@ -702,6 +743,61 @@ window.logout = async function() {
         console.error("Kesalahan saat keluar:", error);
     }
 }
+// index.html - Tempelkan di dalam <script> non-module (paling bawah file)
+
+// --- FUNGSI PENGONTROL MODAL BARANG ---
+
+// Fungsi untuk menampilkan modal Barang
+function showBarangForm(barang = null) {
+    const modal = document.getElementById('barangModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex'); // Menggunakan flex agar modal berada di tengah
+    document.getElementById('barangForm').reset();
+    document.getElementById('barangId').value = '';
+
+    document.getElementById('barangModalTitle').textContent = '➕ Tambah Barang';
+    document.getElementById('photoBarang').required = true;
+
+    // Logika untuk Mode Edit (opsional, jika Anda ingin langsung membuatnya)
+    if (barang) {
+        document.getElementById('barangModalTitle').textContent = '✏️ Edit Barang';
+        document.getElementById('barangId').value = barang.id;
+        document.getElementById('kodeBarang').value = barang.kode;
+        document.getElementById('namaBarang').value = barang.nama;
+        // ... isi field lain di sini ...
+        document.getElementById('photoBarang').required = false; // Tidak wajib upload ulang foto
+    }
+}
+
+// Fungsi untuk menyembunyikan modal Barang
+function closeBarangModal() {
+    document.getElementById('barangModal').classList.add('hidden');
+    document.getElementById('barangModal').classList.remove('flex');
+    document.getElementById('photoPreview').classList.add('hidden');
+}
+
+
+// --- FUNGSI PENGONTROL MODAL GEDUNG ---
+// Anda harus ulangi pola ini untuk modal Gedung:
+function showGedungForm(gedung = null) {
+    const modal = document.getElementById('gedungModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.getElementById('gedungForm').reset();
+    document.getElementById('gedungId').value = '';
+    document.getElementById('gedungModalTitle').textContent = '➕ Tambah Gedung';
+    // ... logika edit jika ada ...
+}
+
+function closeGedungModal() {
+    document.getElementById('gedungModal').classList.add('hidden');
+    document.getElementById('gedungModal').classList.remove('flex');
+}
+
+
+// --- Lanjutkan dengan showRuanganForm(), closeRuanganModal(), dst. ---
+// ...
+
 </script>
 
 </body> 
