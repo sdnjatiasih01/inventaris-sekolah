@@ -595,6 +595,36 @@ box-sizing: border-box;
 </div> 
 </div>
 <script>
+// index.html - Tempelkan di dalam <script> non-module (paling bawah file)
+
+// FUNGSI UTAMA UNTUK NAVIGASI MENU
+function showSection(sectionId) {
+    // 1. Sembunyikan semua section
+    // Ambil semua elemen yang memiliki class="section" (yaitu semua halaman: dasbor, gedung, barang, dll.)
+    const sections = document.querySelectorAll('.section');
+    sections.forEach(section => {
+        section.classList.add('hidden');
+    });
+
+    // 2. Tampilkan section yang diinginkan
+    const activeSection = document.getElementById(sectionId);
+    if (activeSection) {
+        activeSection.classList.remove('hidden');
+    }
+    
+    // Opsional: Anda dapat menambahkan logika pemuatan data di sini.
+    // console.log(`Menampilkan section: ${sectionId}`);
+}
+
+// Fungsi untuk memeriksa dan menampilkan menu Admin (Anda sudah memiliki ID 'adminMenu')
+function checkAdminMenu(role) {
+    const adminMenu = document.getElementById('adminMenu');
+    if (adminMenu) {
+        adminMenu.style.display = (role === 'admin') ? 'block' : 'none';
+    }
+}
+
+// ... Fungsi-fungsi lain seperti showRegisterForm(), showLoginForm(), dan window.logout() ada di bawah atau di atas kode ini.
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -617,6 +647,10 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             // Jika login berhasil dan user adalah admin, tampilkan aplikasi utama
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
+			// *** TAMBAHKAN DUA BARIS INI ***
+            showSection('dasbor'); // Tampilkan halaman Dasbor setelah login
+            checkAdminMenu('admin'); // Tampilkan menu admin jika peran admin
+            // *******************************
             // Jika ada logika tambahan (misalnya cek pending/admin), masukkan di sini
         } else {
             // Jika bukan admin atau belum diatur perannya, paksa logout
