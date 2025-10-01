@@ -1,37 +1,120 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <title>Aplikasi Firebase</title>
+  <meta charset="UTF-8">
+  <title>Aplikasi Login Firebase</title>
   <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      width: 300px;
+      text-align: center;
+    }
+
+    .card h2 { margin-bottom: 20px; }
+
+    .card input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .card button {
+      width: 100%;
+      padding: 10px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .card button:hover { background: #2980b9; }
+
+    #loginError, #registerError, #resetError {
+      color: red;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .link {
+      color: #3498db;
+      cursor: pointer;
+      font-size: 14px;
+      display: block;
+      margin-top: 10px;
+    }
+
     .hidden { display: none; }
   </style>
 </head>
 <body>
+
   <!-- Layar Login -->
-  <div id="loginScreen">
+  <div id="loginScreen" class="card">
     <h2>Login</h2>
     <form id="loginForm">
-      <input type="email" id="loginEmail" placeholder="Email" required><br>
-      <input type="password" id="loginPassword" placeholder="Password" required><br>
-      <button type="submit">Login</button>
-      <p id="loginError" style="color:red"></p>
+      <input type="email" id="loginEmail" placeholder="Masukkan Email" required>
+      <input type="password" id="loginPassword" placeholder="Masukkan Kata Sandi" required>
+      <button type="submit">Masuk</button>
+      <p id="loginError"></p>
     </form>
+    <span class="link" onclick="showRegister()">Belum punya akun? Daftar</span>
+    <span class="link" onclick="showReset()">Lupa kata sandi?</span>
   </div>
 
-  <!-- Layar Aplikasi -->
-  <div id="mainApp" class="hidden">
-    <h2>Halo, Anda sudah login</h2>
-    <button id="logoutBtn">Logout</button>
+  <!-- Layar Register -->
+  <div id="registerScreen" class="card hidden">
+    <h2>Daftar Akun</h2>
+    <form id="registerForm">
+      <input type="email" id="registerEmail" placeholder="Masukkan Email" required>
+      <input type="password" id="registerPassword" placeholder="Buat Kata Sandi" required>
+      <button type="submit">Daftar</button>
+      <p id="registerError"></p>
+    </form>
+    <span class="link" onclick="showLogin()">Sudah punya akun? Login</span>
   </div>
 
-  <!-- Firebase Modular -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut }
-      from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
+  <!-- Layar Reset Password -->
+  <div id="resetScreen" class="card hidden">
+    <h2>Reset Password</h2>
+    <form id="resetForm">
+      <input type="email" id="resetEmail" placeholder="Masukkan Email" required>
+      <button type="submit">Kirim Email Reset</button>
+      <p id="resetError"></p>
+    </form>
+    <span class="link" onclick="showLogin()">Kembali ke Login</span>
+  </div>
 
-    // 🔹 Ganti config ini dengan punyamu dari Firebase Console
+  <!-- Layar Utama -->
+  <div id="mainApp" class="card hidden">
+    <h2>Halo 👋</h2>
+    <p>Anda berhasil login</p>
+    <button id="logoutBtn">Keluar</button>
+  </div>
+
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+  <script>
+    // 🔑 CONFIG FIREBASE (SUDAH TERPASANG)
     const firebaseConfig = {
       apiKey: "AIzaSyAkVZlF1T3EYiUQxeUnEiew2uXanuQcFJ8",
       authDomain: "inventaris-sekolah-6aa45.firebaseapp.com",
@@ -39,15 +122,18 @@
       storageBucket: "inventaris-sekolah-6aa45.firebasestorage.app",
       messagingSenderId: "482992763821",
       appId: "1:482992763821:web:3476cb5bd7320d840c2724",
+      measurementId: "G-C51S4NNKXM"
     };
 
     // Inisialisasi Firebase
     firebase.initializeApp(firebaseConfig);
 
-    // Listener auth global
+    // Listener login global
     firebase.auth().onAuthStateChanged(function(user) {
       if (user) {
         document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('registerScreen').classList.add('hidden');
+        document.getElementById('resetScreen').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
       } else {
         document.getElementById('mainApp').classList.add('hidden');
@@ -67,11 +153,64 @@
         .catch((err) => errorDisplay.textContent = "Login gagal: " + err.message);
     });
 
+    // Register form
+    document.getElementById("registerForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const email = document.getElementById("registerEmail").value;
+      const password = document.getElementById("registerPassword").value;
+      const errorDisplay = document.getElementById("registerError");
+
+      firebase.auth().createUserWithEmailAndPassword(email, password)
+        .then(() => {
+          errorDisplay.textContent = "";
+          alert("Akun berhasil dibuat! Silakan login.");
+          showLogin();
+        })
+        .catch((err) => errorDisplay.textContent = "Gagal daftar: " + err.message);
+    });
+
+    // Reset password form
+    document.getElementById("resetForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const email = document.getElementById("resetEmail").value;
+      const errorDisplay = document.getElementById("resetError");
+
+      firebase.auth().sendPasswordResetEmail(email)
+        .then(() => {
+          errorDisplay.style.color = "green";
+          errorDisplay.textContent = "Email reset terkirim! Periksa kotak masuk Anda.";
+        })
+        .catch((err) => {
+          errorDisplay.style.color = "red";
+          errorDisplay.textContent = "Gagal: " + err.message;
+        });
+    });
+
     // Logout
     document.getElementById("logoutBtn").addEventListener("click", function() {
       firebase.auth().signOut();
     });
+
+    // Fungsi navigasi layar
+    function showRegister() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('registerScreen').classList.remove('hidden');
+      document.getElementById('resetScreen').classList.add('hidden');
+    }
+
+    function showLogin() {
+      document.getElementById('registerScreen').classList.add('hidden');
+      document.getElementById('resetScreen').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+    }
+
+    function showReset() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('registerScreen').classList.add('hidden');
+      document.getElementById('resetScreen').classList.remove('hidden');
+    }
   </script>
+
 </body>
 </html>
 <style>
