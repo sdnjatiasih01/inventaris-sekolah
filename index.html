@@ -625,16 +625,82 @@ function checkAdminMenu(role) {
 }
 
 // ... Fungsi-fungsi lain seperti showRegisterForm(), showLoginForm(), dan window.logout() ada di bawah atau di atas kode ini.
+// LOGIN FORM
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-// index.html - Tempelkan di dalam <script> non-module (setelah listener loginForm)
+	
+	    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const errorDisplay = document.getElementById('loginError');
+    errorDisplay.classList.add('hidden');
 
+    try {
+        const userCredential = await window.firebaseUtils.signInWithEmailAndPassword(
+            window.firebaseAuth, email, password
+        );
+        const user = userCredential.user;
+
+        const userDoc = await window.firebaseUtils.getDoc(
+            window.firebaseUtils.doc(window.firebaseDb, "users", user.uid)
+        );
+
+        if (userDoc.exists() && userDoc.data().role === 'admin') {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            showSection('dasbor');
+            checkAdminMenu('admin');
+        } else {
+            await window.firebaseUtils.signOut(window.firebaseAuth);
+            errorDisplay.textContent = "Akses ditolak. Akun Anda belum disetujui atau bukan Admin.";
+            errorDisplay.classList.remove('hidden');
+        }
+
+    } catch (error) {
+        console.error("Login Error:", error.code, error.message);
+        let errorMessage = "Terjadi kesalahan saat masuk. Coba lagi.";
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+            errorMessage = "Surel atau Kata Sandi salah.";
+        } else if (error.code === 'auth/too-many-requests') {
+            errorMessage = "Terlalu banyak percobaan. Coba lagi nanti.";
+        }
+        errorDisplay.textContent = errorMessage;
+        errorDisplay.classList.remove('hidden');
+    }
+});
+// index.html - Tempelkan di dalam <script> non-module (setelah listener loginForm)
+// BARANG FORM
 document.getElementById('barangForm').addEventListener('submit', async function(e) {
-	// PANGGIL DI SINI (Baris Pertama)
-	e.preventDefault(); 
-    
-    const barangId = document.getElementById('barangId').value;
-    // ... lanjutkan dengan logika penyimpanan data ...
+e.preventdefault();
+
+  const barangId = document.getElementById('barangId').value;
+    const namaBarang = document.getElementById('namaBarang').value;
+    const kodeBarang = document.getElementById('kodeBarang').value;
+
+    const dataBarang = {
+        kode: kodeBarang,
+        nama: namaBarang,
+        createdAt: new Date()
+    };
+
+    try {
+        if (barangId) {
+            await window.firebaseUtils.updateDoc(
+                window.firebaseUtils.doc(window.firebaseDb, "barang", barangId),
+                dataBarang
+            );
+            alert("Barang berhasil diperbarui!");
+        } else {
+            await window.firebaseUtils.addDoc(
+                window.firebaseUtils.collection(window.firebaseDb, "barang"),
+                dataBarang
+            );
+            alert("Barang baru berhasil ditambahkan!");
+        }
+        closeBarangModal();
+    } catch (error) {
+        console.error("Gagal menyimpan barang:", error);
+        alert("Gagal menyimpan data barang. Cek console log.");
+    }
 });
     
     const barangId = document.getElementById('barangId').value;
