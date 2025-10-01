@@ -60,6 +60,7 @@ const penyimpanan = getStorage(aplikasi);
 // Jadikan Firebase tersedia secara global
 window.firebaseAuth = auth;
 window.firebaseDb = db;
+// KODE BARU DI <script type="module">
 window.firebaseStorage = penyimpanan;
 window.firebaseUtils = {
     signInWithEmailAndPassword, 
@@ -78,8 +79,13 @@ window.firebaseUtils = {
     orderBy, 
     ref, 
     uploadBytes, 
-    getDownloadURL 
+    getDownloadURL,
+    // Tambahkan variabel 'auth' dan 'db' agar dapat diakses oleh fungsi di luar module script
+    auth: auth, 
+    db: db
 };
+// Catatan: Variabel window.firebaseAuth dan window.firebaseDb sudah Anda definisikan di atasnya,
+// jadi penambahan ini bersifat opsional, tetapi memastikan semua properti penting ada di dalam object utils.
 
 // --- SCRIPT LAINNYA DI SINI --- (Pastikan skrip lain menggunakan nama fungsi yang sudah di-expose di window.firebaseUtils atau variabel auth/db/penyimpanan)
 // ... (Bagian script sisanya dari file Anda)
