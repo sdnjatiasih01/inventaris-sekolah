@@ -703,92 +703,6 @@ e.preventDefault();
         alert("Gagal menyimpan data barang. Cek console log.");
     }
 });
-    
-    const barangId = document.getElementById('barangId').value;
-    // Ambil data dari formulir di sini
-    const namaBarang = document.getElementById('namaBarang').value;
-    const kodeBarang = document.getElementById('kodeBarang').value;
-    const lokasiId = document.getElementById('LokasiBarang').value; 
-    const photoFile = document.getElementById('photoBarang').files[0];
-
-    // Persiapan data
-    const dataBarang = {
-        kode: kodeBarang,
-        nama: namaBarang,
-        lokasi: lokasiId,
-        // ... field lainnya ...
-        createdAt: new Date()
-    };
-    
-    try {
-        if (barangId) {
-            // Mode Edit: Lakukan update
-            // await window.firebaseUtils.updateDoc(window.firebaseUtils.doc(window.firebaseDb, "barang", barangId), dataBarang);
-            alert("Barang berhasil diperbarui!");
-        } else {
-            // Mode Tambah Baru: Lakukan penambahan
-            // const docRef = await window.firebaseUtils.addDoc(window.firebaseUtils.collection(window.firebaseDb, "barang"), dataBarang);
-            alert("Barang berhasil ditambahkan!");
-        }
-
-        // Tutup modal dan muat ulang data (fungsi loadBarangData belum ada, tapi ini adalah polanya)
-        closeBarangModal();
-        // loadBarangData(); 
-
-    } catch (error) {
-        console.error("Gagal menyimpan barang:", error);
-        alert("Gagal menyimpan data barang. Cek console log.");
-    }
-
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    const errorDisplay = document.getElementById('loginError');
-
-    errorDisplay.classList.add('hidden'); // Sembunyikan pesan error sebelumnya
-
-    try {
-        // Panggil fungsi login Firebase yang sudah di-expose ke window
-        const userCredential = await window.firebaseUtils.signInWithEmailAndPassword(window.firebaseAuth, email, password);
-        const user = userCredential.user;
-        
-        // Cek status pengguna (Opsional: Jika Anda menggunakan sistem status admin/pending)
-        // Jika Anda menggunakan database Firestore untuk menyimpan peran (role), cek di sini:
-        const userDoc = await window.firebaseUtils.getDoc(window.firebaseUtils.doc(window.firebaseDb, "users", user.uid));
-
-        if (userDoc.exists() && userDoc.data().role === 'admin') {
-            // Jika login berhasil dan user adalah admin, tampilkan aplikasi utama
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-			// *** TAMBAHKAN DUA BARIS INI ***
-            showSection('dasbor'); // Tampilkan halaman Dasbor setelah login
-            checkAdminMenu('admin'); // Tampilkan menu admin jika peran admin
-            // *******************************
-            // Jika ada logika tambahan (misalnya cek pending/admin), masukkan di sini
-        } else {
-            // Jika bukan admin atau belum diatur perannya, paksa logout
-            await window.firebaseUtils.signOut(window.firebaseAuth);
-            errorDisplay.textContent = "Akses ditolak. Akun Anda belum disetujui atau bukan Admin.";
-            errorDisplay.classList.remove('hidden');
-        }
-
-
-    } catch (error) {
-        console.error("Login Error:", error.code, error.message);
-        // Tampilkan pesan error spesifik dari Firebase
-        let errorMessage = "Terjadi kesalahan saat masuk. Coba lagi.";
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-            errorMessage = "Surel atau Kata Sandi salah.";
-        } else if (error.code === 'auth/too-many-requests') {
-            errorMessage = "Terlalu banyak percobaan. Coba lagi nanti.";
-        }
-        errorDisplay.textContent = errorMessage;
-        errorDisplay.classList.remove('hidden');
-    }
-});
-// Pindahkan semua skrip yang ada di file Anda ke dalam blok <script> non-modul ini atau pastikan skrip yang menggunakan fungsi Firebase di-wrap dengan benar.
-
-// Fungsi JavaScript yang sudah ada di file Anda, yang menggunakan variabel global 'window.firebaseUtils', dll.
-// ...
 
 function showRegisterForm() {
     document.getElementById('loginFormContainer').classList.add('hidden');
@@ -906,6 +820,7 @@ function closeGedungModal() {
         errorDisplay.textContent = errorMessage;
         errorDisplay.classList.remove('hidden');
     }
+	});
 </script>
 
 </body> 
