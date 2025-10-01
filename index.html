@@ -781,46 +781,6 @@ function closeGedungModal() {
     document.getElementById('gedungModal').classList.add('hidden');
     document.getElementById('gedungModal').classList.remove('flex');
 }
-// index.html - KODE BARANG FORM YANG SUDAH DIKOREKSIdocument.getElementById('loginForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    const errorDisplay = document.getElementById('loginError');
-    errorDisplay.classList.add('hidden');
-
-    try {
-        const userCredential = await window.firebaseUtils.signInWithEmailAndPassword(
-            window.firebaseAuth, email, password
-        );
-        const user = userCredential.user;
-
-        const userDoc = await window.firebaseUtils.getDoc(
-            window.firebaseUtils.doc(window.firebaseDb, "users", user.uid)
-        );
-
-        if (userDoc.exists() && userDoc.data().role === 'admin') {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            showSection('dasbor');
-            checkAdminMenu('admin');
-        } else {
-            await window.firebaseUtils.signOut(window.firebaseAuth);
-            errorDisplay.textContent = "Akses ditolak. Akun Anda belum disetujui atau bukan Admin.";
-            errorDisplay.classList.remove('hidden');
-        }
-    } catch (error) {
-        console.error("Login Error:", error.code, error.message);
-        let errorMessage = "Terjadi kesalahan saat masuk. Coba lagi.";
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-            errorMessage = "Surel atau Kata Sandi salah.";
-        } else if (error.code === 'auth/too-many-requests') {
-            errorMessage = "Terlalu banyak percobaan. Coba lagi nanti.";
-        }
-        errorDisplay.textContent = errorMessage;
-        errorDisplay.classList.remove('hidden');
-    }
-	});
 </script>
 
 </body> 
