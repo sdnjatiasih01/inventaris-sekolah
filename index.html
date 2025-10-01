@@ -596,11 +596,12 @@ box-sizing: border-box;
 </div>
 <script>
 // index.html - Tempelkan di dalam <script> non-module (paling bawah file)
-
+// ====================================================================================
 // FUNGSI UTAMA UNTUK NAVIGASI MENU
+// ====================================================================================
+
 function showSection(sectionId) {
     // 1. Sembunyikan semua section
-    // Ambil semua elemen yang memiliki class="section" (yaitu semua halaman: dasbor, gedung, barang, dll.)
     const sections = document.querySelectorAll('.section');
     sections.forEach(section => {
         section.classList.add('hidden');
@@ -612,11 +613,17 @@ function showSection(sectionId) {
         activeSection.classList.remove('hidden');
     }
     
-    // Opsional: Anda dapat menambahkan logika pemuatan data di sini.
-    // console.log(`Menampilkan section: ${sectionId}`);
+    // Panggil pemuatan data yang spesifik saat berpindah section
+    if (sectionId === 'barang') {
+        loadBarangData();
+        // Anda perlu memanggil loadGedungOptions dan loadRuanganOptions di sini
+    } else if (sectionId === 'gedung') {
+        // loadGedungData(); // TODO: Buat fungsi ini
+    }
+    // ... dan seterusnya
 }
 
-// Fungsi untuk memeriksa dan menampilkan menu Admin (Anda sudah memiliki ID 'adminMenu')
+// Fungsi untuk memeriksa dan menampilkan menu Admin
 function checkAdminMenu(role) {
     const adminMenu = document.getElementById('adminMenu');
     if (adminMenu) {
@@ -624,7 +631,60 @@ function checkAdminMenu(role) {
     }
 }
 
-// ... Fungsi-fungsi lain seperti showRegisterForm(), showLoginForm(), dan window.logout() ada di bawah atau di atas kode ini.
+// ====================================================================================
+// FUNGSI INTI AUTENTIKASI DAN PEMUATAN DATA
+// ====================================================================================
+
+// 1. FUNGSI UNTUK MEMUAT DATA USER DAN INISIALISASI
+function loadUserDataAndInitialize(user) {
+    // Fungsi ini dipanggil setelah login berhasil atau saat sesi di-refresh.
+    // Ini adalah kunci agar sesi tetap terjaga.
+    window.firebaseUtils.getDoc(
+        window.firebaseUtils.doc(window.firebaseDb, "users", user.uid)
+    ).then(userDoc => {
+        // Ambil peran (role) pengguna
+        const role = userDoc.exists() ? userDoc.data().role : 'user';
+        
+        // Sembunyikan Login, Tampilkan Main App
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+        showSection('dasbor');
+        checkAdminMenu(role);
+        
+        // TODO: Panggil semua fungsi pemuatan data awal di sini
+        // loadGedungData(); 
+        // loadRuanganData();
+        loadBarangData(); 
+    }).catch(error => {
+        console.error("Gagal memuat data pengguna:", error);
+        // Jika gagal memuat data, biarkan onAuthStateChanged menangani (atau cek error code)
+    });
+}
+
+// 2. AUTENTIKASI LISTENER GLOBAL (FIX UTAMA UNTUK LOGOUT MENDADAK)
+window.firebaseUtils.onAuthStateChanged(window.firebaseAuth, (user) => {
+    if (user) {
+        // User signed in
+        loadUserDataAndInitialize(user);
+    } else {
+        // User signed out
+        document.getElementById('mainApp').classList.add('hidden');
+        document.getElementById('loginScreen').classList.remove('hidden');
+    }
+});
+
+// 3. FUNGSI PLACEHOLDER UNTUK MEMUAT DATA BARANG (FIX UNTUK REFERENCE ERROR)
+function loadBarangData() {
+    // Fungsi ini dipanggil setelah submit form barang berhasil
+    console.log("Fungsi loadBarangData dipanggil (memuat ulang tabel barang)...");
+    // TODO: Isi logika untuk membaca data 'barang' dari Firestore dan merender ke 'barangTableBody'
+}
+
+
+// ====================================================================================
+// FUNGSI FORM DAN EVENT LISTENER
+// ====================================================================================
+
 // LOGIN FORM
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -638,22 +698,8 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         const userCredential = await window.firebaseUtils.signInWithEmailAndPassword(
             window.firebaseAuth, email, password
         );
-        const user = userCredential.user;
-
-        const userDoc = await window.firebaseUtils.getDoc(
-            window.firebaseUtils.doc(window.firebaseDb, "users", user.uid)
-        );
-
-        if (userDoc.exists() && userDoc.data().role === 'admin') {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-            showSection('dasbor');
-            checkAdminMenu('admin');
-        } else {
-            await window.firebaseUtils.signOut(window.firebaseAuth);
-            errorDisplay.textContent = "Akses ditolak. Akun Anda belum disetujui atau bukan Admin.";
-            errorDisplay.classList.remove('hidden');
-        }
+        // Setelah sukses, loadUserDataAndInitialize akan dipanggil oleh onAuthStateChanged
+        // Tidak perlu kode transisi screen di sini.
 
     } catch (error) {
         console.error("Login Error:", error.code, error.message);
@@ -667,22 +713,54 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         errorDisplay.classList.remove('hidden');
     }
 });
-// index.html - Tempelkan di dalam <script> non-module (setelah listener loginForm)
-// BARANG FORM
-document.getElementById('barangForm').addEventListener('submit', async function(e) {
-e.preventDefault();
 
-  const barangId = document.getElementById('barangId').value;
+// ------------------------------------
+// BARANG FORM (Diperbaiki agar datanya lengkap & siap untuk upload foto)
+// ------------------------------------
+document.getElementById('barangForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const barangId = document.getElementById('barangId').value;
     const namaBarang = document.getElementById('namaBarang').value;
     const kodeBarang = document.getElementById('kodeBarang').value;
-
-    const dataBarang = {
-        kode: kodeBarang,
-        nama: namaBarang,
-        createdAt: new Date()
-    };
+    
+    // Ambil semua field yang ada di form
+    const merkBarang = document.getElementById('merkBarang').value;
+    const tahunPerolehan = document.getElementById('tahunPerolehan').value;
+    const penguasaan = document.getElementById('penguasaan').value;
+    const jumlahBarang = document.getElementById('jumlahBarang').value;
+    const satuanBarang = document.getElementById('satuanBarang').value;
+    const lokasiId = document.getElementById('LokasiBarang').value;
+    const kondisiBarang = document.getElementById('kondisiBarang').value;
+    const photoFile = document.getElementById('photoBarang').files[0];
+    let photoURL = '';
 
     try {
+        // 1. UPLOAD FOTO (Hanya jika ada foto baru)
+        if (photoFile) {
+            const storageRef = window.firebaseUtils.ref(window.firebaseStorage, `barang_photos/${kodeBarang}_${Date.now()}`);
+            const snapshot = await window.firebaseUtils.uploadBytes(storageRef, photoFile);
+            photoURL = await window.firebaseUtils.getDownloadURL(snapshot.ref);
+        }
+        
+        // 2. Persiapan Data (LENGKAP)
+        const dataBarang = {
+            kode: kodeBarang,
+            nama: namaBarang,
+            merk: merkBarang || '',
+            tahunPerolehan: parseInt(tahunPerolehan),
+            penguasaan: penguasaan,
+            jumlah: parseInt(jumlahBarang),
+            satuan: satuanBarang,
+            lokasi: lokasiId,
+            kondisi: kondisiBarang,
+            ...(photoURL && { photoURL: photoURL }),
+            updatedAt: new Date(),
+            // Jangan timpa createdAt jika ini mode edit
+            createdAt: barangId ? dataBarang.createdAt : new Date() 
+        };
+
+        // 3. SAVE TO FIRESTORE
         if (barangId) {
             await window.firebaseUtils.updateDoc(
                 window.firebaseUtils.doc(window.firebaseDb, "barang", barangId),
@@ -696,13 +774,17 @@ e.preventDefault();
             );
             alert("Barang baru berhasil ditambahkan!");
         }
+        
+        // Aksi setelah sukses
         closeBarangModal();
-		loadBarangData(); // ✅ otomatis refresh tabel barang
+        loadBarangData(); // Panggil fungsi untuk me-refresh tabel
+        
     } catch (error) {
         console.error("Gagal menyimpan barang:", error);
-        alert("Gagal menyimpan data barang. Cek console log.");
+        alert("Gagal menyimpan data barang. Pastikan semua field terisi benar dan coba lagi. Cek console log.");
     }
 });
+
 
 function showRegisterForm() {
     document.getElementById('loginFormContainer').classList.add('hidden');
@@ -716,11 +798,6 @@ function showLoginForm() {
     document.getElementById('registerSuccess').classList.add('hidden');
 }
 
-// Tambahkan kode JavaScript Anda yang lain (Login, Register, CRUD, dll.) di sini.
-// Karena saya tidak melihat seluruh isi skrip Anda, pastikan Anda menggunakan nama fungsi Firebase yang BENAR
-// (misalnya: `firebaseUtils.signInWithEmailAndPassword` BUKAN `masukDenganEmailDanKataSandi`).
-
-// Contoh perbaikan untuk logout, menggunakan variabel global
 window.logout = async function() {
     try {
         await window.firebaseUtils.signOut(window.firebaseAuth);
@@ -762,7 +839,6 @@ function closeBarangModal() {
 }
 
 // --- FUNGSI PENGONTROL MODAL GEDUNG ---
-// Anda harus ulangi pola ini untuk modal Gedung:
 // index.html - Ganti fungsi Anda dengan versi yang sudah dibersihkan ini
 
 function showGedungForm(gedung = null) {
@@ -782,6 +858,5 @@ function closeGedungModal() {
     document.getElementById('gedungModal').classList.remove('flex');
 }
 </script>
-
 </body> 
 </html>
