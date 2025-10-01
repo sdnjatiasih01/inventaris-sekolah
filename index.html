@@ -600,31 +600,28 @@ box-sizing: border-box;
 </div> 
 </div> 
 </div>
+
 <script>
 // ====================================================================================
-// FUNGSI GLOBAL (Tidak menggunakan DOM kecuali untuk modal/navigasi)
+// FUNGSI GLOBAL & NAVIGASI
 // ====================================================================================
 
 function showSection(sectionId) {
-    // 1. Sembunyikan semua section
     const sections = document.querySelectorAll('.section');
-    sections.forEach(section => {
+    sections.forEach(function(section) {
         section.classList.add('hidden');
     });
 
-    // 2. Tampilkan section yang diinginkan
     const activeSection = document.getElementById(sectionId);
     if (activeSection) {
         activeSection.classList.remove('hidden');
     }
     
-    // Panggil pemuatan data yang spesifik saat berpindah section
     if (sectionId === 'barang') {
         loadBarangData();
     }
 }
 
-// Fungsi untuk memeriksa dan menampilkan menu Admin
 function checkAdminMenu(role) {
     const adminMenu = document.getElementById('adminMenu');
     if (adminMenu) {
@@ -632,30 +629,29 @@ function checkAdminMenu(role) {
     }
 }
 
-// FUNGSI LOGOUT GLOBAL
-window.logout = (.then().catch()) function() {
-    try {
-        (.then().catch()) window.firebaseUtils.signOut(window.firebaseAuth);
-    } catch (error) {
+// FUNGSI LOGOUT GLOBAL (Menggunakan .then() untuk kompatibilitas)
+window.logout = function() {
+    window.firebaseUtils.signOut(window.firebaseAuth)
+    .then(function() {
+        console.log("Berhasil keluar.");
+    })
+    .catch(function(error) {
         console.error("Kesalahan saat keluar:", error);
-    }
+    });
 }
 
 // ------------------------------------
-// FUNGSI PEMUATAN DATA & INISIALISASI (PENTING UNTUK FIX LOGOUT)
+// FUNGSI PEMUATAN DATA & INISIALISASI
 // ------------------------------------
 
-// FUNGSI PLACEHOLDER: Agar tidak ReferenceError setelah menyimpan data barang
 function loadBarangData() {
-    console.log("Fungsi loadBarangData dipanggil (memuat ulang tabel barang)...");
-    // TODO: Isi logika untuk membaca data 'barang' dari Firestore
+    console.log("Fungsi loadBarangData dipanggil...");
 }
 
-// FUNGSI INISIALISASI SETELAH LOGIN/REFRESH
 function loadUserDataAndInitialize(user) {
     window.firebaseUtils.getDoc(
         window.firebaseUtils.doc(window.firebaseDb, "users", user.uid)
-    ).then(userDoc => {
+    ).then(function(userDoc) {
         const role = userDoc.exists() ? userDoc.data().role : 'user';
         
         document.getElementById('loginScreen').classList.add('hidden');
@@ -664,7 +660,7 @@ function loadUserDataAndInitialize(user) {
         checkAdminMenu(role);
         
         loadBarangData(); 
-    }).catch(error => {
+    }).catch(function(error) {
         console.error("Gagal memuat data pengguna:", error);
     });
 }
@@ -677,7 +673,7 @@ function closeBarangModal() {
     document.getElementById('barangModal').classList.remove('flex');
     document.getElementById('photoPreview').classList.add('hidden');
 }
-function showBarangForm(barang = null) {
+function showBarangForm(barang) { // Hapus default null agar lebih aman
     const modal = document.getElementById('barangModal');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -690,7 +686,7 @@ function closeGedungModal() {
     document.getElementById('gedungModal').classList.add('hidden');
     document.getElementById('gedungModal').classList.remove('flex');
 }
-function showGedungForm(gedung = null) {
+function showGedungForm(gedung) { // Hapus default null
     const modal = document.getElementById('gedungModal');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -698,19 +694,18 @@ function showGedungForm(gedung = null) {
     document.getElementById('gedungId').value = '';
     document.getElementById('gedungModalTitle').textContent = '➕ Tambah Gedung';
 }
-// TODO: Tambahkan fungsi modal ruangan, dll.
+// Tambahkan fungsi modal ruangan, dll. di sini.
 
 
 // ====================================================================================
 // AUTENTIKASI LISTENER GLOBAL (FIX TYPERROR & LOGOUT)
 // ====================================================================================
 
-window.firebaseUtils.onAuthStateChanged(window.firebaseAuth, (user) => {
+// Ini adalah kunci untuk menjaga sesi tetap hidup dan menangani transisi UI.
+window.firebaseUtils.onAuthStateChanged(window.firebaseAuth, function(user) {
     if (user) {
-        // User signed in
         loadUserDataAndInitialize(user);
     } else {
-        // User signed out
         document.getElementById('mainApp').classList.add('hidden');
         document.getElementById('loginScreen').classList.remove('hidden');
     }
@@ -731,14 +726,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const errorDisplay = document.getElementById('loginError');
         errorDisplay.classList.add('hidden');
 
-        // Menggunakan .then() promise chain
         window.firebaseUtils.signInWithEmailAndPassword(
             window.firebaseAuth, email, password
         )
-        .then(() => {
+        .then(function() {
             // Sukses ditangani oleh onAuthStateChanged
         })
-        .catch((error) => {
+        .catch(function(error) {
             console.error("Login Error:", error.code, error.message);
             let errorMessage = "Terjadi kesalahan saat masuk. Coba lagi.";
             
@@ -754,8 +748,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // BARANG FORM
-    document.getElementById('barangForm').addEventListener('submit', (.then().catch()) function(e) {
+    // BARANG FORM (FIXED: Menggunakan .then().catch() dan menghilangkan object spread)
+    document.getElementById('barangForm').addEventListener('submit', function(e) {
         e.preventDefault();
 
         const barangId = document.getElementById('barangId').value;
@@ -771,15 +765,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const photoFile = document.getElementById('photoBarang').files[0];
         let photoURL = '';
 
-        try {
-            // UPLOAD FOTO
+        // Gunakan Promise chain untuk upload (Mengganti await)
+        const uploadTask = new Promise(function(resolve, reject) {
             if (photoFile) {
-                const storageRef = window.firebaseUtils.ref(window.firebaseStorage, `barang_photos/${kodeBarang}_${Date.now()}`);
-                const snapshot = (.then().catch()) window.firebaseUtils.uploadBytes(storageRef, photoFile);
-                photoURL = (.then().catch()) window.firebaseUtils.getDownloadURL(snapshot.ref);
+                const storageRef = window.firebaseUtils.ref(window.firebaseStorage, 'barang_photos/' + kodeBarang + '_' + Date.now());
+                window.firebaseUtils.uploadBytes(storageRef, photoFile)
+                .then(function(snapshot) {
+                    return window.firebaseUtils.getDownloadURL(snapshot.ref);
+                })
+                .then(function(url) {
+                    resolve(url);
+                })
+                .catch(function(error) {
+                    reject(error);
+                });
+            } else {
+                resolve('');
             }
+        });
+
+        uploadTask
+        .then(function(url) {
+            photoURL = url;
             
-            // Persiapan Data (LENGKAP)
+            // Persiapan Data (Menghilangkan Object Spread '...')
             const dataBarang = {
                 kode: kodeBarang,
                 nama: namaBarang,
@@ -790,34 +799,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 satuan: satuanBarang,
                 lokasi: lokasiId,
                 kondisi: kondisiBarang,
-                ...(photoURL && { photoURL: photoURL }),
                 updatedAt: new Date(),
                 createdAt: barangId ? new Date() : new Date() 
             };
-            
-            // SAVE TO FIRESTORE
-            if (barangId) {
-                (.then().catch()) window.firebaseUtils.updateDoc(
-                    window.firebaseUtils.doc(window.firebaseDb, "barang", barangId),
-                    dataBarang
-                );
-                alert("Barang berhasil diperbarui!");
-            } else {
-                (.then().catch()) window.firebaseUtils.addDoc(
-                    window.firebaseUtils.collection(window.firebaseDb, "barang"),
-                    dataBarang
-                );
-                alert("Barang baru berhasil ditambahkan!");
+
+            // Tambahkan photoURL secara kondisional (Fix untuk Error '.')
+            if (photoURL) {
+                dataBarang.photoURL = photoURL;
             }
-            
+
+            // SAVE TO FIRESTORE
+            let saveDoc;
+            if (barangId) {
+                saveDoc = window.firebaseUtils.updateDoc(window.firebaseUtils.doc(window.firebaseDb, "barang", barangId), dataBarang);
+            } else {
+                saveDoc = window.firebaseUtils.addDoc(window.firebaseUtils.collection(window.firebaseDb, "barang"), dataBarang);
+            }
+
+            return saveDoc;
+        })
+        .then(function() {
+            alert(barangId ? "Barang berhasil diperbarui!" : "Barang baru berhasil ditambahkan!");
             closeBarangModal();
             loadBarangData(); 
-            
-        } catch (error) {
+        })
+        .catch(function(error) {
             console.error("Gagal menyimpan barang:", error);
             alert("Gagal menyimpan data barang. Pastikan semua field terisi benar dan coba lagi. Cek console log.");
-            // TIDAK ADA LOGIKA LOGOUT DI SINI
-        }
+        });
     });
 
     // FUNGSI NAVIGASI LOGIN/REGISTER
@@ -832,10 +841,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('loginFormContainer').classList.remove('hidden');
         document.getElementById('registerSuccess').classList.add('hidden');
     }
-    
-    // TODO: Tambahkan event listener form lainnya (gedungForm, ruanganForm, registerForm, dll.) di sini
 });
-
 </script>
 </body> 
 </html>
