@@ -630,7 +630,12 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 // index.html - Tempelkan di dalam <script> non-module (setelah listener loginForm)
 
 document.getElementById('barangForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+	// PANGGIL DI SINI (Baris Pertama)
+	e.preventDefault(); 
+    
+    const barangId = document.getElementById('barangId').value;
+    // ... lanjutkan dengan logika penyimpanan data ...
+});
     
     const barangId = document.getElementById('barangId').value;
     // Ambil data dari formulir di sini
@@ -775,29 +780,53 @@ function closeBarangModal() {
     document.getElementById('barangModal').classList.remove('flex');
     document.getElementById('photoPreview').classList.add('hidden');
 }
-
+});
 
 // --- FUNGSI PENGONTROL MODAL GEDUNG ---
 // Anda harus ulangi pola ini untuk modal Gedung:
+// index.html - Ganti fungsi Anda dengan versi yang sudah dibersihkan ini
+
 function showGedungForm(gedung = null) {
     const modal = document.getElementById('gedungModal');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
-    document.getElementById('gedungForm').reset();
+    
+    // Baris ini yang benar: mereset formulir
+    document.getElementById('gedungForm').reset(); 
+    
     document.getElementById('gedungId').value = '';
     document.getElementById('gedungModalTitle').textContent = '➕ Tambah Gedung';
     // ... logika edit jika ada ...
+}
 }
 
 function closeGedungModal() {
     document.getElementById('gedungModal').classList.add('hidden');
     document.getElementById('gedungModal').classList.remove('flex');
 }
-
-
+// index.html - KODE BARANG FORM YANG SUDAH DIKOREKSI
+document.getElementById('barangForm').addEventListener('submit', async function(e) {
+    e.preventDefault(); 
+    // ... logika penyimpanan data barang ...
+    alert("Data Barang berhasil diproses.");
+    closeBarangModal();
+}); // <--- INI ADALAH PENUTUP YANG HILANG!
 // --- Lanjutkan dengan showRuanganForm(), closeRuanganModal(), dst. ---
 // ...
+// index.html - Tempelkan di bagian paling bawah blok <script> non-module
 
+// --- EVENT LISTENER UNTUK GEDUNG ---
+document.getElementById('gedungForm').addEventListener('submit', async function(e) {
+    // e.preventDefault() sudah ada, SANGAT BAGUS!
+    e.preventDefault(); 
+    
+    // Logika pengiriman data Gedung ke Firebase dimulai di sini
+    const gedungId = document.getElementById('gedungId').value;
+    // ...
+    
+    alert("Data Gedung berhasil diproses. Tidak ada page reload!");
+    closeGedungModal();
+});
 </script>
 
 </body> 
