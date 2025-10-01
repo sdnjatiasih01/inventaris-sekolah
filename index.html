@@ -7,88 +7,62 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<script type="module"> 
-// ====================================================================================
-// PERBAIKAN UTAMA: MODUL IMPOR FIREBASE V9
-// ====================================================================================
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+<script type="module">
+  // Import modul Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } 
+    from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
 
-// Menggunakan nama fungsi standar Firebase (English)
-import { 
-    getAuth, 
-    signInWithEmailAndPassword, 
-    createUserWithEmailAndPassword, 
-    signOut, 
-    onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+  // Konfigurasi Firebase
+  const firebaseConfig = {
+    apiKey: "API_KEY",
+    authDomain: "PROJECT_ID.firebaseapp.com",
+    projectId: "PROJECT_ID",
+    storageBucket: "PROJECT_ID.appspot.com",
+    messagingSenderId: "SENDER_ID",
+    appId: "APP_ID"
+  };
 
-import { 
-    getFirestore, 
-    collection, 
-    addDoc, 
-    getDocs, 
-    getDoc, 
-    doc, 
-    updateDoc, 
-    deleteDoc, 
-    query, 
-    where, 
-    orderBy
-} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+  // Inisialisasi Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
 
-import { 
-    getStorage, 
-    ref, 
-    uploadBytes, 
-    getDownloadURL, 
-} from "https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js";
+  // Listener global Auth
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      loadUserDataAndInitialize(user);
+    } else {
+      document.getElementById('mainApp').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+    }
+  });
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAkVZlF1T3EYiUQxeUnEiew2uXanuQcFJ8",
-  authDomain: "inventaris-sekolah-6aa45.firebaseapp.com",
-  projectId: "inventaris-sekolah-6aa45",
-  // Perbaikan: Gunakan format .appspot.com untuk Storage Bucket
-  storageBucket: "inventaris-sekolah-6aa45.appspot.com", 
-  messagingSenderId: "482992763821",
-  appId: "1:482992763821:web:baea4937e2cfd37b0c2724",
-  measurementId: "G-107GNWQBJY"
-};
+  // Event listener login form
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-const aplikasi = initializeApp(firebaseConfig);
-const auth = getAuth(aplikasi);
-const db = getFirestore(aplikasi);
-const penyimpanan = getStorage(aplikasi);
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+      const errorDisplay = document.getElementById("loginError");
 
-// Jadikan objek Firebase utama tersedia secara global
-window.firebaseAuth = auth;
-window.firebaseDb = db;
-window.firebaseStorage = penyimpanan;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        errorDisplay.textContent = "";
+      } catch (err) {
+        errorDisplay.textContent = "Login gagal: " + err.message;
+      }
+    });
 
-// PERBAIKAN SINTAKSIS KRITIS DI SINI (Menghilangkan kurung kurawal ganda dan menambahkan koma)
-window.firebaseUtils = {
-    signInWithEmailAndPassword, 
-    createUserWithEmailAndPassword, 
-    signOut, 
-    onAuthStateChanged, 
-    collection, 
-    addDoc, 
-    getDocs,
-		getDoc,
-    doc, 
-    updateDoc, 
-    deleteDoc, 
-    query, 
-    where, 
-    orderBy, 
-    ref, 
-    uploadBytes, 
-    getDownloadURL, // <--- KOMPONEN TERAKHIR HARUS DIIKUTI KOMA JIKA ADA PROPERTI LAIN
-    
-    // Mengekspos objek Auth dan DB di dalam Utils (opsional, tapi konsisten)
-    auth: auth, 
-    db: db
-};
-</script> 
+    // Event listener tombol logout (jika ada)
+    const logoutBtn = document.getElementById("logoutBtn");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
+        await signOut(auth);
+      });
+    }
+  });
+</script>
 <style>
  body { 
 box-sizing: border-box; 
