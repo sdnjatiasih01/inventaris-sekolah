@@ -8,7 +8,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script type="module"> 
-// Konfigurasi Firebase
+// ====================================================================================
+// PERBAIKAN UTAMA: MODUL IMPOR FIREBASE V9
+// ====================================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 
 // Menggunakan nama fungsi standar Firebase (English)
@@ -57,17 +59,17 @@ const auth = getAuth(aplikasi);
 const db = getFirestore(aplikasi);
 const penyimpanan = getStorage(aplikasi);
 
-// Jadikan Firebase tersedia secara global
+// Jadikan objek Firebase utama tersedia secara global
 window.firebaseAuth = auth;
 window.firebaseDb = db;
-// KODE BARU DI <script type="module">
 window.firebaseStorage = penyimpanan;
-// Cek di dalam <script type="module"> (di bagian paling bawah blok module)
+
+// PERBAIKAN SINTAKSIS KRITIS DI SINI (Menghilangkan kurung kurawal ganda dan menambahkan koma)
 window.firebaseUtils = {
     signInWithEmailAndPassword, 
     createUserWithEmailAndPassword, 
     signOut, 
-    onAuthStateChanged, // <-- PASTIKAN INI ADA
+    onAuthStateChanged, 
     collection, 
     addDoc, 
     getDocs,
@@ -80,18 +82,12 @@ window.firebaseUtils = {
     orderBy, 
     ref, 
     uploadBytes, 
-    getDownloadURL, // <--- PASTIKAN KOMPONEN INI SEMUA ADA
-};
-    // Tambahkan variabel 'auth' dan 'db' agar dapat diakses oleh fungsi di luar module script
+    getDownloadURL, // <--- KOMPONEN TERAKHIR HARUS DIIKUTI KOMA JIKA ADA PROPERTI LAIN
+    
+    // Mengekspos objek Auth dan DB di dalam Utils (opsional, tapi konsisten)
     auth: auth, 
     db: db
-
-// Catatan: Variabel window.firebaseAuth dan window.firebaseDb sudah Anda definisikan di atasnya,
-// jadi penambahan ini bersifat opsional, tetapi memastikan semua properti penting ada di dalam object utils.
-
-// --- SCRIPT LAINNYA DI SINI --- (Pastikan skrip lain menggunakan nama fungsi yang sudah di-expose di window.firebaseUtils atau variabel auth/db/penyimpanan)
-// ... (Bagian script sisanya dari file Anda)
-
+};
 </script> 
 <style>
  body { 
@@ -651,8 +647,11 @@ function loadBarangData() {
 }
 
 function loadUserDataAndInitialize(user) {
+    // Perbaikan: Gunakan window.firebaseDb alih-alih window.firebaseUtils.db
+    // meskipun keduanya menunjuk ke objek yang sama, penggunaan yang di-expose secara langsung lebih jelas.
+    // Tapi jika Anda ingin konsisten, pakai window.firebaseUtils.doc(window.firebaseUtils.db, ...)
     window.firebaseUtils.getDoc(
-        window.firebaseUtils.doc(window.firebaseDb, "users", user.uid)
+        window.firebaseUtils.doc(window.firebaseDb, "users", user.uid) 
     ).then(function(userDoc) {
         const role = userDoc.exists() ? userDoc.data().role : 'user';
         
@@ -683,6 +682,8 @@ function showBarangForm(barang) { // Hapus default null agar lebih aman
     document.getElementById('barangId').value = '';
     document.getElementById('barangModalTitle').textContent = barang ? '✏️ Edit Barang' : '➕ Tambah Barang';
     document.getElementById('photoBarang').required = !barang;
+    // Tambahkan log untuk memastikan modal dipanggil:
+    console.log("Menampilkan formulir Barang. Mode:", barang ? 'Edit' : 'Tambah');
 }
 function closeGedungModal() {
     document.getElementById('gedungModal').classList.add('hidden');
@@ -700,10 +701,11 @@ function showGedungForm(gedung) { // Hapus default null
 
 
 // ====================================================================================
-// AUTENTIKASI LISTENER GLOBAL (FIX TYPERROR & LOGOUT)
+// AUTENTIKASI LISTENER GLOBAL (BARIS 707 DENGAN PERBAIKAN SINTAKSIS MODULE)
 // ====================================================================================
 
 // Ini adalah kunci untuk menjaga sesi tetap hidup dan menangani transisi UI.
+// Kesalahan di baris ini seharusnya teratasi setelah memperbaiki syntax error di atas.
 window.firebaseUtils.onAuthStateChanged(window.firebaseAuth, function(user) {
     if (user) {
         loadUserDataAndInitialize(user);
@@ -715,11 +717,11 @@ window.firebaseUtils.onAuthStateChanged(window.firebaseAuth, function(user) {
 
 
 // ====================================================================================
-// EVENT LISTENER FORM (Ditempatkan di dalam DOMContentLoaded untuk FIX SyntaxError)
+// EVENT LISTENER FORM 
 // ====================================================================================
 document.addEventListener('DOMContentLoaded', function() {
 
-    // LOGIN FORM (FIXED: Menggunakan .then().catch() untuk menghindari SyntaxError)
+    // LOGIN FORM
     document.getElementById('loginForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -738,7 +740,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("Login Error:", error.code, error.message);
             let errorMessage = "Terjadi kesalahan saat masuk. Coba lagi.";
             
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                 errorMessage = "Surel atau Kata Sandi salah.";
             } else if (error.code === 'auth/too-many-requests') {
                 errorMessage = "Terlalu banyak percobaan. Coba lagi nanti.";
@@ -750,7 +752,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // BARANG FORM (FIXED: Menggunakan .then().catch() dan menghilangkan object spread)
+    // BARANG FORM
     document.getElementById('barangForm').addEventListener('submit', function(e) {
         e.preventDefault();
 
@@ -767,9 +769,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const photoFile = document.getElementById('photoBarang').files[0];
         let photoURL = '';
 
-        // Gunakan Promise chain untuk upload (Mengganti await)
+        // Gunakan Promise chain untuk upload
         const uploadTask = new Promise(function(resolve, reject) {
             if (photoFile) {
+                // Perbaikan: Pastikan penggunaan window.firebaseStorage
                 const storageRef = window.firebaseUtils.ref(window.firebaseStorage, 'barang_photos/' + kodeBarang + '_' + Date.now());
                 window.firebaseUtils.uploadBytes(storageRef, photoFile)
                 .then(function(snapshot) {
@@ -790,7 +793,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(function(url) {
             photoURL = url;
             
-            // Persiapan Data (Menghilangkan Object Spread '...')
+            // Persiapan Data
             const dataBarang = {
                 kode: kodeBarang,
                 nama: namaBarang,
@@ -802,10 +805,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 lokasi: lokasiId,
                 kondisi: kondisiBarang,
                 updatedAt: new Date(),
-                createdAt: barangId ? new Date() : new Date() 
+                // Gunakan createdAt hanya saat menambahkan, atau jika edit, pastikan field ini ada
+                createdAt: new Date() 
             };
-
-            // Tambahkan photoURL secara kondisional (Fix untuk Error '.')
+            
+            // Tambahkan photoURL secara kondisional
             if (photoURL) {
                 dataBarang.photoURL = photoURL;
             }
