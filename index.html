@@ -731,14 +731,8 @@ window.firebaseUtils.onAuthStateChanged(window.firebaseAuth, (user) => {
     }
 });
 
-
-// ====================================================================================
-// EVENT LISTENER FORM (Dimuat setelah DOM siap untuk FIX SyntaxError)
-// ====================================================================================
-document.addEventListener('DOMContentLoaded', function() {
-
-    // LOGIN FORM
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+// LOGIN FORM
+    document.getElementById('loginForm').addEventListener('submit', function(e) { // <-- HILANGKAN 'async'
         e.preventDefault();
         
         const email = document.getElementById('loginEmail').value;
@@ -746,23 +740,27 @@ document.addEventListener('DOMContentLoaded', function() {
         const errorDisplay = document.getElementById('loginError');
         errorDisplay.classList.add('hidden');
 
-        try {
-            // Karena sudah ada onAuthStateChanged, kita cukup login, onAuthStateChanged akan handle transisi screen.
-            await window.firebaseUtils.signInWithEmailAndPassword(
-                window.firebaseAuth, email, password
-            );
-
-        } catch (error) {
+        // Ganti 'try/await/catch' dengan .then().catch()
+        window.firebaseUtils.signInWithEmailAndPassword(
+            window.firebaseAuth, email, password
+        )
+        .then(() => {
+            // Sukses. TIDAK PERLU LOGIKA UI di sini. onAuthStateChanged (di Baris ~723) akan menanganinya.
+        })
+        .catch((error) => {
             console.error("Login Error:", error.code, error.message);
             let errorMessage = "Terjadi kesalahan saat masuk. Coba lagi.";
+            
+            // Logika Error Handling
             if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
                 errorMessage = "Surel atau Kata Sandi salah.";
             } else if (error.code === 'auth/too-many-requests') {
                 errorMessage = "Terlalu banyak percobaan. Coba lagi nanti.";
             }
+
             errorDisplay.textContent = errorMessage;
             errorDisplay.classList.remove('hidden');
-        }
+        });
     });
 
     // BARANG FORM (Diperbaiki agar datanya lengkap)
