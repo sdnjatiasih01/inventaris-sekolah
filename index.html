@@ -633,9 +633,9 @@ function checkAdminMenu(role) {
 }
 
 // FUNGSI LOGOUT GLOBAL
-window.logout = async function() {
+window.logout = (.then().catch()) function() {
     try {
-        await window.firebaseUtils.signOut(window.firebaseAuth);
+        (.then().catch()) window.firebaseUtils.signOut(window.firebaseAuth);
     } catch (error) {
         console.error("Kesalahan saat keluar:", error);
     }
@@ -755,7 +755,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // BARANG FORM
-    document.getElementById('barangForm').addEventListener('submit', async function(e) {
+    document.getElementById('barangForm').addEventListener('submit', (.then().catch()) function(e) {
         e.preventDefault();
 
         const barangId = document.getElementById('barangId').value;
@@ -775,8 +775,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // UPLOAD FOTO
             if (photoFile) {
                 const storageRef = window.firebaseUtils.ref(window.firebaseStorage, `barang_photos/${kodeBarang}_${Date.now()}`);
-                const snapshot = await window.firebaseUtils.uploadBytes(storageRef, photoFile);
-                photoURL = await window.firebaseUtils.getDownloadURL(snapshot.ref);
+                const snapshot = (.then().catch()) window.firebaseUtils.uploadBytes(storageRef, photoFile);
+                photoURL = (.then().catch()) window.firebaseUtils.getDownloadURL(snapshot.ref);
             }
             
             // Persiapan Data (LENGKAP)
@@ -797,13 +797,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // SAVE TO FIRESTORE
             if (barangId) {
-                await window.firebaseUtils.updateDoc(
+                (.then().catch()) window.firebaseUtils.updateDoc(
                     window.firebaseUtils.doc(window.firebaseDb, "barang", barangId),
                     dataBarang
                 );
                 alert("Barang berhasil diperbarui!");
             } else {
-                await window.firebaseUtils.addDoc(
+                (.then().catch()) window.firebaseUtils.addDoc(
                     window.firebaseUtils.collection(window.firebaseDb, "barang"),
                     dataBarang
                 );
