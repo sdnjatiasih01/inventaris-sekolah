@@ -732,7 +732,8 @@ window.firebaseUtils.onAuthStateChanged(window.firebaseAuth, (user) => {
 });
 
 // LOGIN FORM
-    document.getElementById('loginForm').addEventListener('submit', function(e) { // <-- HILANGKAN 'async'
+// LOGIN FORM (FIXED: Menggunakan .then().catch() untuk menghindari SyntaxError)
+    document.getElementById('loginForm').addEventListener('submit', function(e) { 
         e.preventDefault();
         
         const email = document.getElementById('loginEmail').value;
@@ -740,12 +741,12 @@ window.firebaseUtils.onAuthStateChanged(window.firebaseAuth, (user) => {
         const errorDisplay = document.getElementById('loginError');
         errorDisplay.classList.add('hidden');
 
-        // Ganti 'try/await/catch' dengan .then().catch()
+        // Mengganti await dengan .then() promise chain
         window.firebaseUtils.signInWithEmailAndPassword(
             window.firebaseAuth, email, password
         )
         .then(() => {
-            // Sukses. TIDAK PERLU LOGIKA UI di sini. onAuthStateChanged (di Baris ~723) akan menanganinya.
+            // Sukses. onAuthStateChanged akan mengambil alih dan memuat UI.
         })
         .catch((error) => {
             console.error("Login Error:", error.code, error.message);
@@ -756,6 +757,8 @@ window.firebaseUtils.onAuthStateChanged(window.firebaseAuth, (user) => {
                 errorMessage = "Surel atau Kata Sandi salah.";
             } else if (error.code === 'auth/too-many-requests') {
                 errorMessage = "Terlalu banyak percobaan. Coba lagi nanti.";
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = "Format Surel tidak valid.";
             }
 
             errorDisplay.textContent = errorMessage;
