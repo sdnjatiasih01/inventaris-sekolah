@@ -62,15 +62,16 @@ window.firebaseAuth = auth;
 window.firebaseDb = db;
 // KODE BARU DI <script type="module">
 window.firebaseStorage = penyimpanan;
+// Cek di dalam <script type="module"> (di bagian paling bawah blok module)
 window.firebaseUtils = {
     signInWithEmailAndPassword, 
     createUserWithEmailAndPassword, 
     signOut, 
-    onAuthStateChanged, 
+    onAuthStateChanged, // <-- PASTIKAN INI ADA
     collection, 
     addDoc, 
     getDocs,
-	getDoc,
+		getDoc,
     doc, 
     updateDoc, 
     deleteDoc, 
@@ -79,7 +80,8 @@ window.firebaseUtils = {
     orderBy, 
     ref, 
     uploadBytes, 
-    getDownloadURL,
+    getDownloadURL, // <--- PASTIKAN KOMPONEN INI SEMUA ADA
+};
     // Tambahkan variabel 'auth' dan 'db' agar dapat diakses oleh fungsi di luar module script
     auth: auth, 
     db: db
